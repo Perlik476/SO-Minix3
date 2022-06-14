@@ -24,4 +24,4 @@ done
 
 cd "${dir}/../images" || fail "could not cd to /images dir"
 
-qemu-system-x86_64 -curses -enable-kvm -drive file=minix.img -rtc base=localtime -net user,hostfwd=tcp::"${ssh_port}"-:22 -net nic,model=virtio -m 1024M
+qemu-system-x86_64 -curses -enable-kvm -machine kernel_irqchip=off -drive file=minix.img -rtc base=localtime -net user,hostfwd=tcp::"${ssh_port}"-:22 -net nic,model=virtio -m 16384M

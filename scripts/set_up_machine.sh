@@ -23,9 +23,24 @@ fi
 done
 
 echo "setting up ssh key"
-ssh-copy-id root@localhost -p "${ssh_port}" || fail "could not copy ssh key"
 
+#ssh-copy-id root@localhost -p "${ssh_port}" || fail "could not copy ssh key"
+#
+#echo "installing rsync"
+#ssh root@localhost -p "${ssh_port}" "pkgin -y in rsync"
+#
+#echo "setup done"
+
+
+ssh-copy-id root@localhost -p "${ssh_port}" || fail "could not copy ssh key"
 echo "installing rsync"
 ssh root@localhost -p "${ssh_port}" "pkgin -y in rsync"
+
+echo "setting the timezone"
+current_time=$(date "+%C%y%m%d%H%M.%S")
+ssh root@localhost -p "${ssh_port}" "echo export TZ=Europe/Warsaw > /etc/rc.timezone"
+ssh root@localhost -p "${ssh_port}" "date ${current_time}"
+
+ssh root@localhost -p "${ssh_port}" "pkgin -y in nano"
 
 echo "setup done"

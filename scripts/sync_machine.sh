@@ -22,6 +22,9 @@ then
 fi
 done
 
+current_time=$(date "+%C%y%m%d%H%M.%S")
+ssh root@localhost -p "${ssh_port}" "date ${current_time}"
+
 cd "${dir}/../sources/task" || fail "could not cd to /sources/task dir"
 rsync -uav -e "ssh -p ${ssh_port}" --exclude=".git" ./usr/include/ root@localhost:/usr/include/
 rsync -uav -e "ssh -p ${ssh_port}" --exclude=".git" ./usr/src/ root@localhost:/usr/src/

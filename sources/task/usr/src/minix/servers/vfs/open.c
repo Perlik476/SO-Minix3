@@ -278,6 +278,7 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 	}
   } else {
 	r = scratch(fp).file.fd_nr;
+	
   }
 
   return(r);

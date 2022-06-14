@@ -22,19 +22,22 @@ then
 fi
 done
 
+current_time=$(date "+%C%y%m%d%H%M.%S")
+ssh root@localhost -p "${ssh_port}" "date ${current_time}"
+
 ssh -p "${ssh_port}" root@localhost << EOF
 cd /usr/src
-make includes
-cd /usr/src/minix/fs/procfs
-make && make install
+make includes || exit 1
+cd /usr/src/minix/kernel
+make && make install || exit 1
+cd /usr/src/minix/lib/libsys
+make && make install || exit 1
+cd /usr/src/minix/servers/sched
+make && make install || exit 1
 cd /usr/src/minix/servers/pm
-make && make install
-cd /usr/src/minix/drivers/storage/ramdisk
-make && make install
-cd /usr/src/minix/drivers/storage/memory
-make && make install
+make && make install || exit 1
 cd /usr/src/lib/libc
-make && make install
+make && make install || exit 1
 cd /usr/src/releasetools
 make do-hdboot
 
