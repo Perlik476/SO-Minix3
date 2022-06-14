@@ -4,13 +4,19 @@
 #include "errno.h"
 #include "file.h"
 #include <fcntl.h>
+#include "vnode.h"
 
 struct notify_list notify_list[NR_NOTIFY];
 
 void notify_handle_open(struct vnode *vnode) {
 	for (size_t i = 0; i < NR_NOTIFY; i++) {
 		if (notify_list[i].is_used && vnode == notify_list[i].vnode) {
-			if (notify_list[i].event_type == NOTIFY_OPEN) {
+			int event = notify_list[i].event_type;
+			if (event == NOTIFY_OPEN) {
+				notify_list[i].is_used = 0;
+				replycode(notify_list[i].fp->fp_endpoint, (OK));
+			}
+			else if (event == NOTIFY_TRIOPEN && vnode->v_ref_count >= 3) {
 				notify_list[i].is_used = 0;
 				replycode(notify_list[i].fp->fp_endpoint, (OK));
 			}
@@ -42,6 +48,10 @@ int do_notify(void) {
 		if (!S_ISDIR(mode)) {
 			return (ENOTDIR);
 		}
+	}
+
+	if (event == NOTIFY_TRIOPEN && f->filp_vno->v_ref_count >= 3) {
+		return (OK);
 	}
 
 	for (size_t i = 0; i < NR_NOTIFY; i++) {

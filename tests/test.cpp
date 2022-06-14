@@ -333,7 +333,7 @@ void test_notify_argument() {
 
 int main() {
 	test_notify_open();
-	// test_notify_triopen();
+	test_notify_triopen();
 	// test_notify_create();
 	// test_notify_move();
 	// test_notify_argument();
