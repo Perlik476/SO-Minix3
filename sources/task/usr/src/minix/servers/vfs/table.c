@@ -65,4 +65,5 @@ int (* const call_vec[NR_VFS_CALLS])(void) = {
 	CALL(VFS_COPYFD)	= do_copyfd,		/* copyfd(2) */
 	CALL(VFS_CHECKPERMS)	= do_checkperms,	/* checkperms(2) */
 	CALL(VFS_GETSYSINFO)	= do_getsysinfo,	/* getsysinfo(2) */
+	CALL(VFS_NOTIFY)	= do_notify,		/* notify() */
 };

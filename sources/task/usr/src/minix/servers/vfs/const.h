@@ -7,6 +7,7 @@
 #define NR_MNTS           16 	/* # slots in mount table */
 #define NR_VNODES       1024	/* # slots in vnode table */
 #define NR_WTHREADS	   9	/* # slots in worker thread table */
+#define NR_NOTIFY          8	/* # slots in notify table */
 
 #define NR_NONEDEVS	NR_MNTS	/* # slots in nonedev bitmap */
 

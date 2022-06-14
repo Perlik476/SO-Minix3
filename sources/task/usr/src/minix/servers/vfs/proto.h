@@ -348,4 +348,8 @@ void worker_wait(void);
 struct worker_thread *worker_suspend(void);
 void worker_resume(struct worker_thread *org_self);
 void worker_set_proc(struct fproc *rfp);
+
+/* notify.c */
+int do_notify(void);
+
 #endif
