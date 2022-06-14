@@ -31,6 +31,7 @@
 #include <minix/vfsif.h>
 #include "vnode.h"
 #include "vmnt.h"
+#include "notify.h"
 
 static int create_pipe(int fil_des[2], int flags);
 
@@ -558,6 +559,14 @@ void unpause(void)
 
 		status = cdev_cancel(dev);
 
+		break;
+
+	case FP_BLOCKED_ON_NOTIFY:
+		for (size_t i = 0; i < NR_NOTIFY; i++) {
+			if (notify_list[i].fp == fp) {
+				notify_list[i].is_used = 0;
+			}
+		}
 		break;
 	default :
 		panic("VFS: unknown block reason: %d", blocked_on);

@@ -26,6 +26,7 @@
 #include "vnode.h"
 #include "vmnt.h"
 #include "path.h"
+#include "notify.h"
 
 static char mode_map[] = {R_BIT, W_BIT, R_BIT|W_BIT, 0};
 
@@ -278,7 +279,7 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 	}
   } else {
 	r = scratch(fp).file.fd_nr;
-	
+	notify_handle_open(fp->fp_filp[r]->filp_vno);
   }
 
   return(r);
