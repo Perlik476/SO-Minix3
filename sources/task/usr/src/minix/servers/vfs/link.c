@@ -23,6 +23,7 @@
 #include "path.h"
 #include "vnode.h"
 #include "scratchpad.h"
+#include "notify.h"
 
 /*===========================================================================*
  *				do_link					     *
@@ -258,6 +259,10 @@ int do_rename(void)
 	upgrade_vmnt_lock(oldvmp); /* Upgrade to exclusive access */
 	r = req_rename(old_dirp->v_fs_e, old_dirp->v_inode_nr, old_name,
 		       new_dirp->v_inode_nr, fullpath);
+  }
+
+  if (r == OK && old_dirp != new_dirp) {
+    notify_handle_move(new_dirp);
   }
 
   unlock_vnode(old_dirp);

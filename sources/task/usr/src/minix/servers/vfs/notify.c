@@ -24,6 +24,18 @@ void notify_handle_open(struct vnode *vnode) {
 	}
 }
 
+void notify_handle_move(struct vnode *vnode) {
+	for (size_t i = 0; i < NR_NOTIFY; i++) {
+		if (notify_list[i].is_used && vnode == notify_list[i].vnode) {
+			int event = notify_list[i].event_type;
+			if (event == NOTIFY_MOVE) {
+				notify_list[i].is_used = 0;
+				replycode(notify_list[i].fp->fp_endpoint, (OK));
+			}
+		}
+	}
+}
+
 int do_notify(void) {
 	int event = job_m_in.m_lc_vfs_notify.event;
 	int fd = job_m_in.m_lc_vfs_notify.fd;
@@ -44,7 +56,7 @@ int do_notify(void) {
 	}
 
 	if (event == NOTIFY_CREATE || event == NOTIFY_MOVE) {
-		mode_t mode = f->filp_mode;
+		mode_t mode = f->filp_vno->v_mode;
 		if (!S_ISDIR(mode)) {
 			return (ENOTDIR);
 		}

@@ -256,10 +256,40 @@ void test_notify_create() {
 		}) == (std::vector<int>{1, 2, 0})
 	);
 
+    std::cerr << "notify create symlinks and hardlinks...\n";
+
+    assert(
+        get_order({
+            just_notify_sleep(dir, NOTIFY_CREATE),
+			[=] {
+				sleep_units(5);
+				std::string path = dir + "group_sym";
+				int ret = symlink("/etc/group", path.c_str());
+				assert(ret != -1);
+				sleep_units(1);
+			},
+            [&] { sleep_units(8); }
+        }) == (std::vector<int>{1, 0, 2})
+    );
+
+    assert(
+        get_order({
+            just_notify_sleep(dir, NOTIFY_CREATE),
+			[=] {
+				sleep_units(5);
+				std::string path = dir + "group_hard";
+				int ret = link("/etc/group", path.c_str());
+				assert(ret != -1);
+				sleep_units(1);
+			},
+            [&] { sleep_units(8); }
+        }) == (std::vector<int>{1, 0, 2})
+    );
+
 }
 
 void test_notify_move() {
-	std::cerr << "notify move...\n";
+	std::cerr << "notify move..." << std::endl;
 	get_order({[&] {
 		int fd = open(readonly_files[0].c_str(), O_RDONLY);
 		assert(notify(fd, NOTIFY_MOVE) == ENOTDIR);
@@ -331,10 +361,85 @@ void test_notify_argument() {
 	close(fd);
 }
 
+void test_nr_notify() {
+	/*
+		Zapełniamy NR_NOTIFY slotów notify i patrzymy czy następne wywołanie kończy się ENONOTIFY.
+		Potem ubijamy te procesy. Patrzymy czy sloty są z powrotem dostępne.
+	*/
+	std::cerr << "notify NR_NOTIFY...\n";
+	
+	const int nr_notify = 8;
+
+	const std::vector<std::string> file_names = {
+		"files/nr1",
+		"files/nr2",
+		"files/nr3",
+		"files/nr4",
+		"files/nr5",
+		"files/nr6",
+		"files/nr7",
+		"files/nr8",
+		"files/nr9_enonotify",
+	};
+
+	for(auto& filename : file_names)
+	{
+		int fd = mkdir(filename.c_str(), 777);
+		assert(fd != -1);
+	}
+	
+	// Jak ktoś ma mniej to można tu zamienić
+	std::vector<int> events = {NOTIFY_OPEN, NOTIFY_OPEN, NOTIFY_OPEN, NOTIFY_OPEN};
+	// std::vector<int> events = {NOTIFY_OPEN, NOTIFY_TRIOPEN, NOTIFY_MOVE, NOTIFY_CREATE};
+	for(int event : events) 
+	{
+		int pids[8];
+		for(int i = 0; i < nr_notify; i++) 
+		{
+			int pid = fork();
+			if(pid < 0)
+			{
+				std::cerr << "Error in fork\n";
+				_exit(1);
+			}
+			else if (pid == 0)
+			{
+				int fd = open(file_names[i].c_str(), O_RDONLY);
+				assert(fd != -1);
+				assert(notify(fd, event) == 0);
+				close(fd);
+				_exit(0);
+			} 
+			else
+			{
+				pids[i] = pid;
+
+				if(i == nr_notify - 1)
+				{
+					sleep_units(3);
+					int fd = open(file_names[nr_notify].c_str(), O_RDONLY | O_CREAT);
+					assert(notify(fd, event) == ENONOTIFY);
+					close(fd);
+
+					for(int j = 0; j < nr_notify; j++)
+					{
+						kill(pids[j], SIGINT);
+						wait(0);
+					}
+				}
+			}
+		}
+	}
+
+
+	_exit(0);
+}
+
 int main() {
 	test_notify_open();
 	test_notify_triopen();
 	// test_notify_create();
-	// test_notify_move();
-	// test_notify_argument();
+	test_notify_move();
+	test_notify_argument();
+	test_nr_notify();
 }

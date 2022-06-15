@@ -12,6 +12,8 @@ EXTERN struct notify_list {
 
 void notify_handle_open(struct vnode *);
 
+void notify_handle_move(struct vnode *);
+
 #endif
 
 
