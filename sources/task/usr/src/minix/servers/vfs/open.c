@@ -267,6 +267,11 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 	}
   }
 
+  if (r == OK) {
+	int fd = scratch(fp).file.fd_nr;
+	notify_handle_open(fp->fp_filp[fd]->filp_vno);
+  }
+
   unlock_filp(filp);
 
   /* If error, release inode. */
@@ -279,7 +284,6 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 	}
   } else {
 	r = scratch(fp).file.fd_nr;
-	notify_handle_open(fp->fp_filp[r]->filp_vno);
   }
 
   return(r);
