@@ -14,6 +14,8 @@ void notify_handle_open(struct vnode *);
 
 void notify_handle_move(struct vnode *);
 
+void init_mutex();
+
 #endif
 
 

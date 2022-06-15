@@ -8,7 +8,14 @@
 
 struct notify_list notify_list[NR_NOTIFY];
 
+mutex_t mutex;
+
+void init_mutex() {
+	mutex_init(&mutex, NULL);
+}
+
 void notify_handle_open(struct vnode *vnode) {
+	mutex_lock(&mutex);
 	for (size_t i = 0; i < NR_NOTIFY; i++) {
 		if (notify_list[i].is_used && vnode == notify_list[i].vnode) {
 			int event = notify_list[i].event_type;
@@ -22,9 +29,11 @@ void notify_handle_open(struct vnode *vnode) {
 			}
 		}
 	}
+	mutex_unlock(&mutex);
 }
 
 void notify_handle_move(struct vnode *vnode) {
+	mutex_lock(&mutex);
 	for (size_t i = 0; i < NR_NOTIFY; i++) {
 		if (notify_list[i].is_used && vnode == notify_list[i].vnode) {
 			int event = notify_list[i].event_type;
@@ -34,6 +43,7 @@ void notify_handle_move(struct vnode *vnode) {
 			}
 		}
 	}
+	mutex_unlock(&mutex);
 }
 
 int do_notify(void) {
@@ -66,15 +76,18 @@ int do_notify(void) {
 		return (OK);
 	}
 
+	mutex_lock(&mutex);
 	for (size_t i = 0; i < NR_NOTIFY; i++) {
 		if (!notify_list[i].is_used) {
 			notify_list[i].is_used = 1;
 			notify_list[i].event_type = event;
 			notify_list[i].vnode = fp->fp_filp[fd]->filp_vno;
 			notify_list[i].fp = fp;
+			mutex_unlock(&mutex);
 			suspend(FP_BLOCKED_ON_NOTIFY);
 			return (SUSPEND);
 		}
 	}
+	mutex_unlock(&mutex);
 	return (ENONOTIFY);
 }

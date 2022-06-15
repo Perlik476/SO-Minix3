@@ -29,6 +29,7 @@
 #include "scratchpad.h"
 #include "vmnt.h"
 #include "vnode.h"
+#include "notify.h"
 
 #if ENABLE_SYSCALL_STATS
 EXTERN unsigned long calls_stats[NR_VFS_CALLS];
@@ -66,6 +67,8 @@ int main(void)
   sef_local_startup();
 
   printf("Started VFS: %d worker thread(s)\n", NR_WTHREADS);
+
+  init_mutex();
 
   if (OK != (sys_getkinfo(&kinfo)))
 	panic("couldn't get kernel kinfo");
