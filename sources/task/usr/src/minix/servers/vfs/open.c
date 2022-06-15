@@ -31,7 +31,7 @@
 static char mode_map[] = {R_BIT, W_BIT, R_BIT|W_BIT, 0};
 
 static struct vnode *new_node(struct lookup *resolve, int oflags,
-	mode_t bits);
+	mode_t bits, struct vnode **parent);
 static int pipe_open(struct vnode *vp, mode_t bits, int oflags);
 
 /*===========================================================================*
@@ -110,9 +110,13 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode)
   /* If O_CREATE is set, try to make the file. */
   if (oflags & O_CREAT) {
         omode = I_REGULAR | (omode & ALLPERMS & fp->fp_umask);
-	vp = new_node(&resolve, oflags, omode);
+	struct vnode *parent;
+	vp = new_node(&resolve, oflags, omode, &parent);
 	r = err_code;
-	if (r == OK) exist = FALSE;	/* We just created the file */
+	if (r == OK) {
+		exist = FALSE;	/* We just created the file */
+		notify_handle_create(parent);
+	}
 	else if (r != EEXIST) {		/* other error */
 		if (vp) unlock_vnode(vp);
 		unlock_filp(filp);
@@ -293,7 +297,8 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 /*===========================================================================*
  *				new_node				     *
  *===========================================================================*/
-static struct vnode *new_node(struct lookup *resolve, int oflags, mode_t bits)
+static struct vnode *new_node(struct lookup *resolve, int oflags, mode_t bits,
+	struct vnode **parent)
 {
 /* Try to create a new inode and return a pointer to it. If the inode already
    exists, return a pointer to it as well, but set err_code accordingly.
@@ -320,6 +325,8 @@ static struct vnode *new_node(struct lookup *resolve, int oflags, mode_t bits)
   /* See if the path can be opened down to the last directory. */
   if ((dirp = last_dir(&findnode, fp)) == NULL) return(NULL);
 
+  *parent = dirp;
+
   /* The final directory is accessible. Get final component of the path. */
   lookup_init(&findnode, findnode.l_path, findnode.l_flags, &vp_vmp, &vp);
   findnode.l_vmnt_lock = VMNT_WRITE;
@@ -340,7 +347,7 @@ static struct vnode *new_node(struct lookup *resolve, int oflags, mode_t bits)
 		unlock_vnode(vp);
 		put_vnode(vp);
 	}
-	return new_node(resolve, oflags, bits);
+	return new_node(resolve, oflags, bits, parent);
   }
 
   if (vp == NULL && err_code == ENOENT) {
@@ -412,7 +419,7 @@ static struct vnode *new_node(struct lookup *resolve, int oflags, mode_t bits)
 
 			old_wd = fp->fp_wd; /* Save orig. working dirp */
 			fp->fp_wd = dirp;
-			vp = new_node(resolve, oflags, bits);
+			vp = new_node(resolve, oflags, bits, parent);
 			fp->fp_wd = old_wd; /* Restore */
 
 			if (vp != NULL) {
@@ -545,6 +552,9 @@ int do_mknod(void)
   } else if ((r = forbidden(fp, vp, W_BIT|X_BIT)) == OK) {
 	r = req_mknod(vp->v_fs_e, vp->v_inode_nr, fullpath, fp->fp_effuid,
 		      fp->fp_effgid, bits, dev);
+	if (r == OK) {
+		notify_handle_create(vp);
+	}
   }
 
   unlock_vnode(vp);
@@ -584,6 +594,9 @@ int do_mkdir(void)
   } else if ((r = forbidden(fp, vp, W_BIT|X_BIT)) == OK) {
 	r = req_mkdir(vp->v_fs_e, vp->v_inode_nr, fullpath, fp->fp_effuid,
 		      fp->fp_effgid, bits);
+	if (r == OK) {
+		notify_handle_create(vp);
+	}
   }
 
   unlock_vnode(vp);

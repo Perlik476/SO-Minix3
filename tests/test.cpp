@@ -389,8 +389,8 @@ void test_nr_notify() {
 	}
 	
 	// Jak ktoś ma mniej to można tu zamienić
-	std::vector<int> events = {NOTIFY_OPEN, NOTIFY_OPEN, NOTIFY_OPEN, NOTIFY_OPEN};
-	// std::vector<int> events = {NOTIFY_OPEN, NOTIFY_TRIOPEN, NOTIFY_MOVE, NOTIFY_CREATE};
+	// std::vector<int> events = {NOTIFY_OPEN, NOTIFY_OPEN, NOTIFY_OPEN, NOTIFY_OPEN};
+	std::vector<int> events = {NOTIFY_OPEN, NOTIFY_TRIOPEN, NOTIFY_MOVE, NOTIFY_CREATE};
 	for(int event : events) 
 	{
 		int pids[8];
@@ -438,7 +438,7 @@ void test_nr_notify() {
 int main() {
 	test_notify_open();
 	test_notify_triopen();
-	// test_notify_create();
+	test_notify_create();
 	test_notify_move();
 	test_notify_argument();
 	test_nr_notify();

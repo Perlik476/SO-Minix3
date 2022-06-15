@@ -74,9 +74,13 @@ int do_link(void)
   else
 	r = forbidden(fp, dirp, W_BIT | X_BIT);
 
-  if (r == OK)
-	r = req_link(vp->v_fs_e, dirp->v_inode_nr, fullpath,
+  if (r == OK) {
+	  r = req_link(vp->v_fs_e, dirp->v_inode_nr, fullpath,
 		     vp->v_inode_nr);
+    if (r == OK) {
+      notify_handle_create(dirp);
+    }
+  }
 
   unlock_vnode(vp);
   unlock_vnode(dirp);
@@ -418,9 +422,12 @@ int do_slink(void)
   if (fetch_name(vname2, vname2_length, fullpath) != OK) return(err_code);
   if ((vp = last_dir(&resolve, fp)) == NULL) return(err_code);
   if ((r = forbidden(fp, vp, W_BIT|X_BIT)) == OK) {
-	r = req_slink(vp->v_fs_e, vp->v_inode_nr, fullpath, who_e,
+	  r = req_slink(vp->v_fs_e, vp->v_inode_nr, fullpath, who_e,
 		      vname1, vname1_length - 1, fp->fp_effuid,
 		      fp->fp_effgid);
+    if (r == OK) {
+      notify_handle_create(vp);
+    }
   }
 
   unlock_vnode(vp);

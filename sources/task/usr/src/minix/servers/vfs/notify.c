@@ -46,6 +46,20 @@ void notify_handle_move(struct vnode *vnode) {
 	mutex_unlock(&mutex);
 }
 
+void notify_handle_create(struct vnode *vnode) {
+	mutex_lock(&mutex);
+	for (size_t i = 0; i < NR_NOTIFY; i++) {
+		if (notify_list[i].is_used && vnode == notify_list[i].vnode) {
+			int event = notify_list[i].event_type;
+			if (event == NOTIFY_CREATE) {
+				notify_list[i].is_used = 0;
+				replycode(notify_list[i].fp->fp_endpoint, (OK));
+			}
+		}
+	}
+	mutex_unlock(&mutex);
+}
+
 int do_notify(void) {
 	int event = job_m_in.m_lc_vfs_notify.event;
 	int fd = job_m_in.m_lc_vfs_notify.fd;
